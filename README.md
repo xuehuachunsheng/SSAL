@@ -1,5 +1,5 @@
 # SSAL
-The proposed self-supervised active learning approach
+The proposed self-supervised active learning approach.
 
 ## Usage 
 Please create  `models/CIFAR10`, `models/CIFAR100`, `models/FashionMNIST`, `models/SVHN`, `models/TinyImageNet` folders to store the training model and the middle results.
