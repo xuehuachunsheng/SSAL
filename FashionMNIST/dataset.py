@@ -14,7 +14,7 @@ class FashionMNISTDataset(Dataset):
     # This sequence order cannot change!
     classes_finest = ["TShirt", "Trouser", "Pullover", "Dress", 
                         "Coat", "Sandal", "Shirt", "Sneaker", "Bag", "AnkleBoot"]
-    
+    C = 10
     # HLevel: it can be 1,2,3 or [1,2,3]
     # HLevel means the obtained level of labels
     def __init__(self, train=True, image_size=32) -> None:

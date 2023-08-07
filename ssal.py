@@ -72,7 +72,7 @@ class SelfSupervisedAL(BatchSampleSelectionStrategy):
         self.balance = balance
         
         # 存储状态
-        self.states = []
+        self.queryid = 0
 
     def select_balance(self):
         idx = self.U.dataidx
@@ -172,8 +172,7 @@ class SelfSupervisedAL(BatchSampleSelectionStrategy):
         if self.balance:
             # 考虑类别平衡的样本选择
             self.select_idx = self.select_balance()
-        else:
-            # 直接根据信息量选择样本
+        else: # 不考虑类别平衡的样本选择，直接根据信息量选择样本
             info_sorted = sorted(self.info.items(), key=lambda x: -x[1])
             self.select_idx = [x[0] for x in info_sorted[:self.q_budget]]
             
@@ -204,16 +203,10 @@ class SelfSupervisedAL(BatchSampleSelectionStrategy):
     def store_states(self, states_file_path):
         assert states_file_path is not None and isinstance(states_file_path, str)
         assert os.path.exists(os.path.dirname(states_file_path))
-        states = self.states
-        # try:
-        #     f = open(states_file_path, "r")
-        #     states = json.load(f)
-        #     f.close()
-        # except:
-        #     states = []
-        queryid = 1
-        if len(states) > 0:
-            queryid = states[-1]["queryid"] + 1 
+        
+        self.queryid += 1
+        queryid = self.queryid
+        
         c_state = {}
         c_state["queryid"] = queryid
         c_state["nc"] = self.nc.tolist()
@@ -243,19 +236,18 @@ class SelfSupervisedAL(BatchSampleSelectionStrategy):
             json.dump(logits, f)
         c_state["logits"] = logits_file_path
         
-        # 样本特征单独存储
-        im_features = {}
-        for id in self.im_features:
-            c_features = self.im_features[id].tolist()
-            im_features[id] = c_features
-        fea_file_path = os.path.join(dir_path, "features.{}.json".format(queryid))
-        with open(fea_file_path, "w") as f:
-            json.dump(im_features, f)
-        c_state["features"] = fea_file_path
+        # 不存储样本特征，没必要
+        # im_features = {}
+        # for id in self.im_features:
+        #     c_features = self.im_features[id].tolist()
+        #     im_features[id] = c_features
+        # fea_file_path = os.path.join(dir_path, "features.{}.json".format(queryid))
+        # with open(fea_file_path, "w") as f:
+        #     json.dump(im_features, f)
+        # c_state["features"] = fea_file_path
         
-        self.states.append(c_state)
-        with open(states_file_path, "w") as f:
-            json.dump(self.states, f)
+        with open(states_file_path + "." + str(queryid), "w") as f:
+            json.dump(c_state, f)
         
     # 计算labeled set中每个类别的样本数量
     def compute_nc(self):
@@ -342,7 +334,8 @@ class SelfSupervisedAL(BatchSampleSelectionStrategy):
                     print("\rU count:{}/total:{}".format(count,len(idx)), end="")
         self.logits = logits
     
-    # 利用分块的方式存储距离矩阵，直接计算rho和delta
+    # 利用分块的方式计算距离矩阵，否则会产生内存溢出
+    # 直接计算rho和delta
     def compute_rhodelta(self):
         idx = self.U.dataidx
         n = len(idx)
@@ -353,8 +346,9 @@ class SelfSupervisedAL(BatchSampleSelectionStrategy):
             feature_mat[i] = self.im_features[id]
         f_mat = torch.tensor(feature_mat).to(self.device)
         
-        # to According to GPU memeroy size
-        GAP = 2000
+        # According to GPU memeroy size
+        # 如果有多任务，则需降低GAP
+        GAP = 500
         # Step 1. 计算真实的cutoff distance dc
         print("Computing cutoff distance dc....., GAP = ", GAP)
         max_dist = 0
@@ -431,7 +425,7 @@ class SelfSupervisedAL(BatchSampleSelectionStrategy):
         feature_mat = np.empty((n,d))
         for i, id in enumerate(idx):
             feature_mat[i] = self.im_features[id]
-            
+        
         # 放入显存再计算距离
         # 可能引起显存溢出问题
         f_mat = torch.tensor(feature_mat).to(self.device)

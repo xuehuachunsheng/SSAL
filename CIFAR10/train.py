@@ -29,7 +29,7 @@ parser.add_argument('--gpu', default=0, type=int, help="gpu id")
 parser.add_argument('--q_budget', default=2000, type=int)
 parser.add_argument('--dc', default=0.05, type=float)
 parser.add_argument('--info', default="F", type=str)
-parser.add_argument('--balance', default=True, type=bool)
+parser.add_argument('--balance', default="True", type=str)
 
 # Training parameters
 parser.add_argument('--bs', default=64, type=int, help="batch size")
@@ -54,8 +54,10 @@ test_acc_file = "/home/wyx/vscode_projects/SSAL/models/CIFAR10/{}-{}/test_acc.cs
 states_file_path = "/home/wyx/vscode_projects/SSAL/models/CIFAR10/{}-{}/states.json".format(args.info, args.balance)
 best_model_path = "/home/wyx/vscode_projects/SSAL/models/CIFAR10/{}-{}/best_model.pth".format(args.info, args.balance)
 
+print(train_loss_file)
+print(os.path.dirname(train_loss_file))
 if not os.path.exists(os.path.dirname(train_loss_file)):
-    os.mkdir(os.path.dirname(train_loss_file))
+    os.makedirs(os.path.dirname(train_loss_file))
     
 with open(train_loss_file, "w") as f:
     f.write("Epoch,Loss,SUP_LOSS,ROT_LOSS\n")
@@ -93,7 +95,7 @@ ssal = SelfSupervisedAL(L=dataset_L,
                         DEVICE=DEVICE,
                         dc=args.dc,
                         info_metric=args.info,
-                        balance=args.balance)
+                        balance=eval(args.balance))
 
 #optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)

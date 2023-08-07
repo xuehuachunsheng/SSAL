@@ -146,3 +146,10 @@ def test():
     print(y.size())
 
 # test()
+
+if __name__ == "__main__":
+    import torchsummary
+    model = ResNet(BasicBlock, [2, 2, 2, 2], num_classes=10,f_kernel_size=7)
+    model.cuda()
+    torchsummary.summary(model, (3,32,32))
+    
