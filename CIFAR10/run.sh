@@ -7,3 +7,9 @@ nohup /home/wyx/env/python388/bin/python3 -u /home/wyx/vscode_projects/SSAL/CIFA
     --balance True \
     > log.out 2>&1 &
 
+cd /home/wyx/vscode_projects/SSAL/CIFAR10
+nohup /home/wyx/env/python388/bin/python3 -u /home/wyx/vscode_projects/SSAL/CIFAR10/train_sup.py \
+    --gpu 0 \
+    --info F \
+    --balance True \
+    > log.out 2>&1 &
